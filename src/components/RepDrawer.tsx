@@ -167,7 +167,11 @@ export function RepDrawer({
               />
               <Stat
                 label="Conversion rate"
-                value={percent(metrics.conversionRate)}
+                value={
+                  metrics.wonCount + metrics.lostCount === 0
+                    ? '—'
+                    : percent(metrics.conversionRate)
+                }
                 sub={`${metrics.wonCount} won / ${metrics.lostCount} lost`}
               />
               <Stat

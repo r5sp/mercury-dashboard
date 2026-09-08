@@ -138,7 +138,13 @@ export function RevenueChart({ points, measure, onMeasureChange, range }: Revenu
                 stroke: 'var(--surface)',
                 strokeWidth: 2,
               }}
-              dot={false}
+              // At seven points every day is worth a mark; at thirty or ninety
+              // the dots would crowd the line into noise.
+              dot={
+                range === 7
+                  ? { r: 4, fill: 'var(--series-1)', stroke: 'var(--surface)', strokeWidth: 2 }
+                  : false
+              }
               isAnimationActive={false}
             />
           </AreaChart>

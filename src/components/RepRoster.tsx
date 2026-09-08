@@ -217,7 +217,10 @@ export function RepRoster({
                   </td>
                   <td data-label="Conversion">
                     <span className="cell-stack">
-                      <span className="cell-strong">{percent(row.conversionRate)}</span>
+                      {/* No won and no lost deals means there is no rate to state. */}
+                      <span className="cell-strong">
+                        {row.wonCount + row.lostCount === 0 ? '—' : percent(row.conversionRate)}
+                      </span>
                       <span className="cell-stack__sub">
                         {row.wonCount}W / {row.lostCount}L
                       </span>
