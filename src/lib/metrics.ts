@@ -107,6 +107,32 @@ export function revenueSeries(orders: Order[], w: Window): RevenuePoint[] {
   return [...buckets.values()]
 }
 
+export interface ComparedPoint extends RevenuePoint {
+  /** The same day-offset in the preceding window, for the ghost comparison line. */
+  previousRevenue: number
+  previousOrders: number
+  previousDate: string
+}
+
+/**
+ * Aligns the window with the one before it by position, not by date, so day one
+ * of each sits at the same x. That is what makes the comparison readable.
+ */
+export function comparedSeries(
+  orders: Order[],
+  current: Window,
+  previous: Window,
+): ComparedPoint[] {
+  const now = revenueSeries(ordersIn(orders, current), current)
+  const before = revenueSeries(ordersIn(orders, previous), previous)
+  return now.map((point, index) => ({
+    ...point,
+    previousRevenue: before[index]?.revenue ?? 0,
+    previousOrders: before[index]?.orders ?? 0,
+    previousDate: before[index]?.date ?? '',
+  }))
+}
+
 export interface MonthPoint {
   month: string
   revenue: number

@@ -3,7 +3,7 @@ import { Delta } from './ui'
 import { count, money, moneyExact } from '../lib/format'
 import type { Pipeline, Totals } from '../lib/metrics'
 
-interface KpiProps {
+interface CellProps {
   label: string
   value: string
   title?: string
@@ -11,53 +11,57 @@ interface KpiProps {
   foot: ReactNode
 }
 
-const Kpi = ({ label, value, title, change, foot }: KpiProps) => (
-  <div className="card kpi">
-    <div className="kpi__label">{label}</div>
-    <div className="kpi__value" title={title}>
+const Cell = ({ label, value, title, change, foot }: CellProps) => (
+  <div className="band__cell">
+    <div className="label">{label}</div>
+    <div className="band__value" title={title}>
       {value}
     </div>
-    <div className="kpi__foot">
+    <div className="band__foot">
       {change === undefined ? null : <Delta change={change} />}
       <span>{foot}</span>
     </div>
   </div>
 )
 
-interface KpiRowProps {
+interface SummaryBandProps {
   current: Totals
   previous: Totals
   pipeline: Pipeline
   rangeDays: number
 }
 
-export function KpiRow({ current, previous, pipeline, rangeDays }: KpiRowProps) {
+/**
+ * Four figures in one divided band rather than four floating cards - the band is
+ * the page's masthead, and hairlines do the separating.
+ */
+export function SummaryBand({ current, previous, pipeline, rangeDays }: SummaryBandProps) {
   const delta = (after: number, before: number) => (before === 0 ? null : (after - before) / before)
-  const priorLabel = `vs prior ${rangeDays} days`
+  const prior = `prior ${rangeDays}d`
 
   return (
-    <section className="kpis" aria-label="Headline figures">
-      <Kpi
-        label="Total revenue"
+    <section className="band" aria-label="Headline figures">
+      <Cell
+        label="Revenue"
         value={money(current.revenue)}
         title={moneyExact(current.revenue)}
         change={delta(current.revenue, previous.revenue)}
-        foot={priorLabel}
+        foot={prior}
       />
-      <Kpi
+      <Cell
         label="Orders closed"
         value={count(current.orders)}
         change={delta(current.orders, previous.orders)}
-        foot={priorLabel}
+        foot={prior}
       />
-      <Kpi
+      <Cell
         label="Average order value"
         value={money(current.averageOrderValue)}
         title={moneyExact(current.averageOrderValue)}
         change={delta(current.averageOrderValue, previous.averageOrderValue)}
-        foot={priorLabel}
+        foot={prior}
       />
-      <Kpi
+      <Cell
         label="Open pipeline"
         value={money(pipeline.value)}
         title={moneyExact(pipeline.value)}

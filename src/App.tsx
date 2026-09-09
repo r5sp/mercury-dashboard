@@ -1,34 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityFeed } from './components/ActivityFeed'
-import { KpiRow } from './components/KpiRow'
+import { CommandPalette } from './components/CommandPalette'
+import { Rail } from './components/Rail'
 import { RepDrawer } from './components/RepDrawer'
 import { RepRoster, type RosterControls } from './components/RepRoster'
 import { RevenueChart, type Measure } from './components/RevenueChart'
-import { Segmented } from './components/ui'
-import { MoonIcon, SunIcon } from './components/icons'
+import { SummaryBand } from './components/SummaryBand'
 import { dataset } from './data'
 import type { RangeKey } from './data/types'
-import { longDate } from './lib/format'
 import {
   activityForRep,
+  comparedSeries,
   monthlySeries,
   opportunitiesForRep,
   ordersIn,
   pipeline,
   previousWindow,
   repMetrics,
-  revenueSeries,
   sortReps,
   totals,
   window as makeWindow,
   type SortKey,
 } from './lib/metrics'
-
-const RANGES: { value: RangeKey; label: string }[] = [
-  { value: 7, label: '7 days' },
-  { value: 30, label: '30 days' },
-  { value: 90, label: '90 days' },
-]
 
 type Theme = 'light' | 'dark'
 
@@ -43,19 +36,12 @@ function readStoredTheme(): Theme | null {
   }
 }
 
-function systemTheme(): Theme {
-  try {
-    return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  } catch {
-    return 'light'
-  }
-}
-
 export default function App() {
-  const [theme, setTheme] = useState<Theme>(() => readStoredTheme() ?? systemTheme())
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme() ?? 'light')
   const [range, setRange] = useState<RangeKey>(30)
   const [measure, setMeasure] = useState<Measure>('revenue')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const [controls, setControls] = useState<RosterControls>({
     query: '',
     region: 'all',
@@ -63,6 +49,8 @@ export default function App() {
     sortKey: 'revenue',
     sortDirection: 'desc',
   })
+
+  const searchInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -72,6 +60,10 @@ export default function App() {
       /* private browsing - the choice just does not persist */
     }
   }, [theme])
+
+  const toggleTheme = useCallback(() => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+  }, [])
 
   const asOf = dataset.meta.generatedAt
   const now = useMemo(() => new Date(`${asOf}T20:00:00Z`), [asOf])
@@ -84,8 +76,8 @@ export default function App() {
   const openPipeline = useMemo(() => pipeline(dataset.opportunities), [])
 
   const series = useMemo(
-    () => revenueSeries(ordersIn(dataset.orders, current), current),
-    [current],
+    () => comparedSeries(dataset.orders, current, previous),
+    [current, previous],
   )
 
   const allMetrics = useMemo(
@@ -137,72 +129,98 @@ export default function App() {
     })
   }, [])
 
+  /** Keyboard-first: the palette, the period, search focus and the theme. */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen((open) => !open)
+        return
+      }
+      if (typing || event.metaKey || event.ctrlKey || event.altKey) return
+
+      if (event.key === '/') {
+        event.preventDefault()
+        searchInput.current?.focus()
+      } else if (event.key === '1') {
+        setRange(7)
+      } else if (event.key === '2') {
+        setRange(30)
+      } else if (event.key === '3') {
+        setRange(90)
+      } else if (event.key.toLowerCase() === 't') {
+        toggleTheme()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [toggleTheme])
+
   return (
-    <div className="app">
-      <header className="masthead">
-        <div className="masthead__brand">
-          <span className="masthead__mark" aria-hidden>
-            M
-          </span>
-          <div>
-            <h1 className="masthead__title">Mercury</h1>
-            <p className="masthead__subtitle">Sales performance · {dataset.meta.quarter.label}</p>
-          </div>
-        </div>
-        <div className="masthead__spacer" />
-        <div className="masthead__meta">
-          <span className="masthead__asof">Data as of {longDate(asOf)}</span>
+    <div className="shell">
+      <Rail
+        range={range}
+        onRangeChange={setRange}
+        theme={theme}
+        onThemeToggle={toggleTheme}
+        asOf={asOf}
+        quarterLabel={dataset.meta.quarter.label}
+      />
+
+      <main className="main">
+        <header className="topbar">
+          <h1 className="topbar__title">Sales performance</h1>
+          <span className="topbar__crumb">last {range} days</span>
+          <div className="topbar__spacer" />
           <button
             type="button"
-            className="icon-button"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            className="command-hint"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Open the command palette"
           >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            Jump to&hellip;
+            <span className="kbd">⌘K</span>
           </button>
-        </div>
-      </header>
+        </header>
 
-      <div className="toolbar">
-        <span className="toolbar__label" id="range-label">
-          Reporting period
-        </span>
-        <Segmented label="Reporting period" options={RANGES} value={range} onChange={setRange} />
-        <div className="toolbar__spacer" />
-      </div>
-
-      <KpiRow
-        current={currentTotals}
-        previous={previousTotals}
-        pipeline={openPipeline}
-        rangeDays={range}
-      />
-
-      <RevenueChart
-        points={series}
-        measure={measure}
-        onMeasureChange={setMeasure}
-        range={range}
-      />
-
-      <div className="columns">
-        <RepRoster
-          rows={rows}
-          totalCount={allMetrics.length}
-          regions={dataset.meta.regions}
-          controls={controls}
-          onControlsChange={updateControls}
-          onSort={onSort}
-          onSelect={setSelectedId}
-          selectedId={selectedId}
+        <SummaryBand
+          current={currentTotals}
+          previous={previousTotals}
+          pipeline={openPipeline}
           rangeDays={range}
         />
-        <ActivityFeed events={dataset.activity} reps={dataset.reps} now={now} />
-      </div>
 
-      <p className="table-note" style={{ borderTop: 0, paddingLeft: 0 }}>
-        {dataset.meta.note}
-      </p>
+        <RevenueChart
+          points={series}
+          measure={measure}
+          onMeasureChange={setMeasure}
+          range={range}
+        />
+
+        <div className="split">
+          <RepRoster
+            ref={searchInput}
+            rows={rows}
+            totalCount={allMetrics.length}
+            regions={dataset.meta.regions}
+            controls={controls}
+            onControlsChange={updateControls}
+            onSort={onSort}
+            onSelect={setSelectedId}
+            selectedId={selectedId}
+            rangeDays={range}
+          />
+          <ActivityFeed events={dataset.activity} reps={dataset.reps} now={now} />
+        </div>
+
+        <p className="note">{dataset.meta.note}</p>
+      </main>
 
       {selected ? (
         <RepDrawer
@@ -215,6 +233,16 @@ export default function App() {
           quarterLabel={dataset.meta.quarter.label}
           rangeDays={range}
           onClose={() => setSelectedId(null)}
+        />
+      ) : null}
+
+      {paletteOpen ? (
+        <CommandPalette
+          rows={allMetrics}
+          onSelectRep={setSelectedId}
+          onRangeChange={setRange}
+          onThemeToggle={toggleTheme}
+          onClose={() => setPaletteOpen(false)}
         />
       ) : null}
     </div>

@@ -1,5 +1,5 @@
-import type { KeyboardEvent } from 'react'
-import { Avatar, Delta, Meter, Sparkline, StatusPill } from './ui'
+import { forwardRef, type KeyboardEvent } from 'react'
+import { Delta, Meter, Monogram, Sparkline, StatusPill } from './ui'
 import { SearchIcon } from './icons'
 import { count, money, moneyExact, percent } from '../lib/format'
 import { SORT_LABEL, STATUS_LABEL, type RepMetrics, type SortKey } from '../lib/metrics'
@@ -25,27 +25,30 @@ interface RepRosterProps {
   rangeDays: number
 }
 
-const NUMERIC_COLUMNS: { key: SortKey; label: string }[] = [
+const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'revenue', label: 'Revenue' },
   { key: 'orders', label: 'Orders' },
-  { key: 'conversionRate', label: 'Conversion' },
+  { key: 'conversionRate', label: 'Conv.' },
   { key: 'pipeline', label: 'Pipeline' },
   { key: 'attainment', label: 'Quota' },
 ]
 
 const STATUSES: RepStatus[] = ['ahead', 'on_track', 'at_risk']
 
-export function RepRoster({
-  rows,
-  totalCount,
-  regions,
-  controls,
-  onControlsChange,
-  onSort,
-  onSelect,
-  selectedId,
-  rangeDays,
-}: RepRosterProps) {
+export const RepRoster = forwardRef<HTMLInputElement, RepRosterProps>(function RepRoster(
+  {
+    rows,
+    totalCount,
+    regions,
+    controls,
+    onControlsChange,
+    onSort,
+    onSelect,
+    selectedId,
+    rangeDays,
+  },
+  searchRef,
+) {
   const ariaSort = (key: SortKey) =>
     controls.sortKey === key
       ? controls.sortDirection === 'asc'
@@ -64,24 +67,26 @@ export function RepRoster({
   }
 
   return (
-    <section className="card" aria-label="Sales representatives">
-      <div className="card__head">
+    <section className="region" id="roster" aria-label="Sales representatives">
+      <div className="region__head">
         <div>
-          <h2 className="card__title">Sales representatives</h2>
-          <p className="card__sub">
+          <h2 className="region__title">Representatives</h2>
+          <p className="region__sub">
             Revenue, orders and conversion over the last {rangeDays} days. Quota is
-            quarter-to-date. Select a row for detail.
+            quarter-to-date, and the tick on each bar marks how much of the quarter has
+            elapsed. Select a row for detail.
           </p>
         </div>
       </div>
 
-      <div className="roster__filters">
+      <div className="filters">
         <label className="field field--search">
           <SearchIcon />
           <span className="sr-only">Search representatives</span>
           <input
+            ref={searchRef}
             type="search"
-            placeholder="Search by name, region or role"
+            placeholder="Search name, region or role"
             value={controls.query}
             onChange={(event) => onControlsChange({ query: event.target.value })}
           />
@@ -119,39 +124,39 @@ export function RepRoster({
           </select>
         </label>
 
-        <div className="roster__mobile-sort">
-          <label style={{ flex: 1 }}>
-            <span className="sr-only">Sort by</span>
-            <select
-              className="select"
-              value={controls.sortKey}
-              onChange={(event) => onControlsChange({ sortKey: event.target.value as SortKey })}
-            >
-              {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  Sort: {SORT_LABEL[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() =>
+        <label className="only-narrow">
+          <span className="sr-only">Sort by</span>
+          <select
+            className="select"
+            value={`${controls.sortKey}:${controls.sortDirection}`}
+            onChange={(event) => {
+              const [sortKey, sortDirection] = event.target.value.split(':')
               onControlsChange({
-                sortDirection: controls.sortDirection === 'asc' ? 'desc' : 'asc',
+                sortKey: sortKey as SortKey,
+                sortDirection: sortDirection as 'asc' | 'desc',
               })
-            }
+            }}
           >
-            {controls.sortDirection === 'asc' ? '▲ Asc' : '▼ Desc'}
-          </button>
-        </div>
+            {(Object.keys(SORT_LABEL) as SortKey[]).flatMap((key) => [
+              <option key={`${key}:desc`} value={`${key}:desc`}>
+                {SORT_LABEL[key]}, high to low
+              </option>,
+              <option key={`${key}:asc`} value={`${key}:asc`}>
+                {SORT_LABEL[key]}, low to high
+              </option>,
+            ])}
+          </select>
+        </label>
+
+        <span className="filters__count">
+          {rows.length}/{totalCount}
+        </span>
       </div>
 
       {rows.length === 0 ? (
         <div className="empty">
           <div className="empty__title">No representatives match those filters</div>
-          <div>Clear the search box or widen the region and status filters.</div>
+          <div>Clear the search box, or widen the region and status filters.</div>
         </div>
       ) : (
         <div className="table-scroll">
@@ -159,16 +164,25 @@ export function RepRoster({
             <thead>
               <tr>
                 <th scope="col" aria-sort={ariaSort('name')}>
-                  <button type="button" className="table__sort" onClick={() => onSort('name')}>
+                  <button
+                    type="button"
+                    className={
+                      controls.sortKey === 'name' ? 'table__sort table__sort--active' : 'table__sort'
+                    }
+                    onClick={() => onSort('name')}
+                  >
                     Rep <span className="table__caret">{caret('name')}</span>
                   </button>
                 </th>
-                <th scope="col">Region</th>
-                {NUMERIC_COLUMNS.map((column) => (
+                {COLUMNS.map((column) => (
                   <th key={column.key} scope="col" aria-sort={ariaSort(column.key)}>
                     <button
                       type="button"
-                      className="table__sort"
+                      className={
+                        controls.sortKey === column.key
+                          ? 'table__sort table__sort--active'
+                          : 'table__sort'
+                      }
                       onClick={() => onSort(column.key)}
                     >
                       {column.label} <span className="table__caret">{caret(column.key)}</span>
@@ -190,60 +204,48 @@ export function RepRoster({
                 >
                   <td data-label="Rep">
                     <span className="cell-person">
-                      <Avatar name={row.rep.name} />
+                      <Monogram name={row.rep.name} />
                       <span>
                         <span className="cell-person__name">{row.rep.name}</span>
                         <br />
-                        <span className="cell-person__meta">{row.rep.title}</span>
+                        <span className="cell-person__meta">
+                          {row.rep.title} · {row.rep.region}
+                        </span>
                       </span>
                     </span>
                   </td>
-                  <td data-label="Region">{row.rep.region}</td>
                   <td data-label="Revenue">
-                    <span className="cell-stack">
-                      <span className="cell-strong" title={moneyExact(row.revenue)}>
-                        {money(row.revenue)}
-                      </span>
-                      <span className="cell-stack__sub">
-                        <Delta change={row.revenueChange} />
-                      </span>
-                    </span>
+                    <div title={moneyExact(row.revenue)}>{money(row.revenue)}</div>
+                    <div className="cell-sub">
+                      <Delta change={row.revenueChange} />
+                    </div>
                   </td>
                   <td data-label="Orders">
-                    <span className="cell-stack">
-                      <span className="cell-strong">{count(row.orders)}</span>
-                      <span className="cell-stack__sub">{money(row.averageOrderValue)} avg</span>
-                    </span>
+                    <div>{count(row.orders)}</div>
+                    <div className="cell-sub">{money(row.averageOrderValue)} avg</div>
                   </td>
-                  <td data-label="Conversion">
-                    <span className="cell-stack">
-                      {/* No won and no lost deals means there is no rate to state. */}
-                      <span className="cell-strong">
-                        {row.wonCount + row.lostCount === 0 ? '—' : percent(row.conversionRate)}
-                      </span>
-                      <span className="cell-stack__sub">
-                        {row.wonCount}W / {row.lostCount}L
-                      </span>
-                    </span>
+                  <td data-label="Conv.">
+                    <div>
+                      {row.wonCount + row.lostCount === 0 ? '—' : percent(row.conversionRate)}
+                    </div>
+                    <div className="cell-sub">
+                      {row.wonCount}W {row.lostCount}L
+                    </div>
                   </td>
                   <td data-label="Pipeline">
-                    <span className="cell-stack">
-                      <span className="cell-strong" title={moneyExact(row.pipeline.value)}>
-                        {money(row.pipeline.value)}
-                      </span>
-                      <span className="cell-stack__sub">{row.pipeline.count} open</span>
-                    </span>
+                    <div title={moneyExact(row.pipeline.value)}>{money(row.pipeline.value)}</div>
+                    <div className="cell-sub">{row.pipeline.count} open</div>
                   </td>
                   <td data-label="Quota">
                     <span className="cell-quota">
-                      <span className="cell-strong">{percent(row.quota.attainment)}</span>
+                      <span>{percent(row.quota.attainment)}</span>
                       <Meter
                         value={row.quota.attainment}
                         status={row.quota.status}
                         marker={row.quota.elapsed}
                         label={`${percent(row.quota.attainment)} of a ${money(
                           row.quota.target,
-                        )} quarterly target`}
+                        )} quarterly target, with ${percent(row.quota.elapsed)} of the quarter elapsed`}
                       />
                     </span>
                   </td>
@@ -262,11 +264,6 @@ export function RepRoster({
           </table>
         </div>
       )}
-
-      <p className="table-note">
-        Showing {rows.length} of {totalCount} representatives. The tick on each quota bar marks
-        how much of the quarter has elapsed, so a fill short of the tick is behind pace.
-      </p>
     </section>
   )
-}
+})
