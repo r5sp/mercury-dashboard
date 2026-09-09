@@ -1,5 +1,7 @@
 # Mercury
 
+**Live: https://r5sp.github.io/mercury-dashboard/**
+
 A front-end sales performance dashboard. Open it and the state of the business is
 on screen: revenue, orders closed, average order value, open pipeline, a revenue
 trend you can set to 7, 30 or 90 days, a sortable roster of sales
@@ -88,14 +90,37 @@ risk rather than everyone at 400% of a made-up number.
 Every name, account and figure is fictional. There are no real customers or
 people in this repository.
 
+## Keyboard
+
+The interface is keyboard-first, which is most of what separates a tool from a
+page.
+
+| Key | Action |
+|---|---|
+| `Cmd/Ctrl K` | Command palette: jump to any rep, switch period, toggle theme |
+| `/` | Focus the roster search |
+| `1` `2` `3` | 7 / 30 / 90 day reporting period |
+| `t` | Toggle light and dark |
+| `Esc` | Close the palette or the detail panel |
+
+Table rows are focusable and open on Enter.
+
+## Deployment
+
+Pushing to `main` builds and publishes to GitHub Pages via
+`.github/workflows/deploy.yml`. The build runs `tsc` first, so a type error fails
+the deploy rather than shipping. Vite is configured with a relative `base`, so the
+same `dist/` works from a subpath, from a different host, or opened off disk.
+
 ## Design notes
 
-Charts follow one categorical hue for the single plotted series, a 10% wash for
-area fills, 2px lines, hairline gridlines, and value labels only where they
-help - never a number on every point. Status is never carried by colour alone: a
-dot always sits beside its written label. Light and dark are both explicitly
-specified rather than one being an inversion of the other, and the toggle in the
-masthead overrides the operating-system setting.
+The full system is written down in [DESIGN.md](DESIGN.md), including the list of
+things it deliberately refuses to do. In short: ink on warm paper, IBM Plex Sans
+with IBM Plex Mono for every numeral, one claret accent reserved for identity and
+selection, hairline rules instead of shadows, and charts drawn in ink rather than
+colour. Status is never carried by colour alone - a dot always sits beside its
+written label. Light is the default and dark is separately specified rather than
+an inversion of it.
 
 ## Layout of the source
 
