@@ -1,6 +1,7 @@
 import {
   ActivityIcon,
   CheckIcon,
+  HalfDiscIcon,
   MercuryMark,
   MoonIcon,
   OverviewIcon,
@@ -8,7 +9,14 @@ import {
   SunIcon,
 } from './icons'
 import { longDate } from '../lib/format'
+import { THEMES, THEME_LABEL, nextTheme, type Theme } from '../lib/theme'
 import type { RangeKey } from '../data/types'
+
+const THEME_ICON: Record<Theme, typeof SunIcon> = {
+  light: SunIcon,
+  lilac: HalfDiscIcon,
+  dark: MoonIcon,
+}
 
 const RANGES: { value: RangeKey; label: string; key: string }[] = [
   { value: 7, label: 'Last 7 days', key: '1' },
@@ -25,8 +33,8 @@ const SECTIONS: { id: string; label: string; icon: typeof OverviewIcon }[] = [
 interface RailProps {
   range: RangeKey
   onRangeChange: (range: RangeKey) => void
-  theme: 'light' | 'dark'
-  onThemeToggle: () => void
+  theme: Theme
+  onThemeChange: (theme: Theme) => void
   asOf: string
   quarterLabel: string
 }
@@ -35,10 +43,12 @@ export function Rail({
   range,
   onRangeChange,
   theme,
-  onThemeToggle,
+  onThemeChange,
   asOf,
   quarterLabel,
 }: RailProps) {
+  const CycleIcon = THEME_ICON[theme]
+  const upcoming = nextTheme(theme)
   const jump = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -87,6 +97,26 @@ export function Rail({
         ))}
       </div>
 
+      <div className="rail__group">
+        <div className="label">Theme</div>
+      </div>
+      <div className="rail__nav">
+        {THEMES.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className="preset"
+            aria-pressed={option.value === theme}
+            onClick={() => onThemeChange(option.value)}
+          >
+            <span className="preset__check">
+              <CheckIcon />
+            </span>
+            {option.label}
+          </button>
+        ))}
+      </div>
+
       <div className="rail__foot">
         <div className="rail__stamp">
           {quarterLabel}
@@ -97,11 +127,11 @@ export function Rail({
           <button
             type="button"
             className="icon-button"
-            onClick={onThemeToggle}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            title="Toggle theme (t)"
+            onClick={() => onThemeChange(upcoming)}
+            aria-label={`Switch to the ${THEME_LABEL[upcoming]} theme`}
+            title={`Theme: ${THEME_LABEL[theme]} — switch to ${THEME_LABEL[upcoming]} (t)`}
           >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            <CycleIcon />
           </button>
         </div>
       </div>

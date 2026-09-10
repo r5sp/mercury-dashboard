@@ -51,6 +51,14 @@ export const MoonIcon = ({ size = 14 }: IconProps) => (
   </svg>
 )
 
+/** Half-filled disc: the light-but-tinted middle setting. */
+export const HalfDiscIcon = ({ size = 14 }: IconProps) => (
+  <svg {...stroke(size)}>
+    <circle cx="8" cy="8" r="5" />
+    <path d="M8 3a5 5 0 0 1 0 10Z" fill="currentColor" stroke="none" />
+  </svg>
+)
+
 export const CheckIcon = ({ size = 13 }: IconProps) => (
   <svg {...stroke(size)}>
     <path d="M3 8.4l3.1 3.1L13 4.6" />

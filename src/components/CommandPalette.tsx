@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { money, percent } from '../lib/format'
 import { STATUS_LABEL, type RepMetrics } from '../lib/metrics'
+import { THEMES, type Theme } from '../lib/theme'
 import type { RangeKey } from '../data/types'
 
 export interface PaletteAction {
@@ -14,7 +15,8 @@ interface CommandPaletteProps {
   rows: RepMetrics[]
   onSelectRep: (repId: string) => void
   onRangeChange: (range: RangeKey) => void
-  onThemeToggle: () => void
+  onThemeChange: (theme: Theme) => void
+  theme: Theme
   onClose: () => void
 }
 
@@ -26,7 +28,8 @@ export function CommandPalette({
   rows,
   onSelectRep,
   onRangeChange,
-  onThemeToggle,
+  onThemeChange,
+  theme,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
@@ -42,9 +45,14 @@ export function CommandPalette({
       { id: 'r7', label: 'Reporting period: last 7 days', hint: '1', run: () => onRangeChange(7) },
       { id: 'r30', label: 'Reporting period: last 30 days', hint: '2', run: () => onRangeChange(30) },
       { id: 'r90', label: 'Reporting period: last 90 days', hint: '3', run: () => onRangeChange(90) },
-      { id: 'theme', label: 'Toggle light and dark theme', hint: 't', run: onThemeToggle },
+      ...THEMES.map((option) => ({
+        id: `theme-${option.value}`,
+        label: `Theme: ${option.label}`,
+        hint: option.value === theme ? 'current' : undefined,
+        run: () => onThemeChange(option.value),
+      })),
     ],
-    [onRangeChange, onThemeToggle],
+    [onRangeChange, onThemeChange, theme],
   )
 
   const needle = query.trim().toLowerCase()

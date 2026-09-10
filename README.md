@@ -100,7 +100,7 @@ page.
 | `Cmd/Ctrl K` | Command palette: jump to any rep, switch period, toggle theme |
 | `/` | Focus the roster search |
 | `1` `2` `3` | 7 / 30 / 90 day reporting period |
-| `t` | Toggle light and dark |
+| `t` | Step through the Lilac, Paper and Dark themes |
 | `Esc` | Close the palette or the detail panel |
 
 Table rows are focusable and open on Enter.
@@ -119,8 +119,12 @@ things it deliberately refuses to do. In short: ink on warm paper, IBM Plex Sans
 with IBM Plex Mono for every numeral, one claret accent reserved for identity and
 selection, hairline rules instead of shadows, and charts drawn in ink rather than
 colour. Status is never carried by colour alone - a dot always sits beside its
-written label. Light is the default and dark is separately specified rather than
-an inversion of it.
+written label.
+
+Three themes ship - **Lilac** (the default light purple), **Paper**, and
+**Dark** - each specified in full rather than derived by inverting another, and
+each holding WCAG AA on its own surfaces. Pick one from the rail, the command
+palette, or the `t` key.
 
 ## Layout of the source
 

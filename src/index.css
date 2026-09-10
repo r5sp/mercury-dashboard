@@ -42,8 +42,48 @@
   --row: 40px;
 }
 
+/* ---------------------------------------------------------------------------
+   Lilac - a light purple mode, requested explicitly.
+
+   Built as aubergine ink on a lilac paper rather than the indigo-on-white that
+   every generated dashboard ships: the hue moves, the discipline does not. Data
+   is still ink (a deep violet-black), the accent is still one colour held back
+   for identity and selection, and every token below clears WCAG AA on this
+   surface. Reds shift to a plum-crimson so they sit in the same family instead
+   of fighting the ground.
+   --------------------------------------------------------------------------- */
+:root[data-theme='lilac'] {
+  color-scheme: light;
+
+  --paper: #e4daf4;
+  --surface: #f1eafb;
+  --surface-2: #d9ccee;
+  --hover: rgba(29, 22, 48, 0.05);
+  --active: rgba(29, 22, 48, 0.085);
+
+  --ink: #1d1630;
+  --ink-2: #4b4066;
+  --muted: #635a7d;
+  --rule: #cdbde8;
+  --rule-strong: #b39fd6;
+
+  --accent: #6d3f9e;
+  --accent-wash: rgba(109, 63, 158, 0.11);
+
+  --positive: #146b4c;
+  --negative: #a32b4a;
+  --caution: #7c5510;
+
+  --data: #2a1f45;
+  --data-wash: rgba(42, 31, 69, 0.07);
+  --data-ghost: #a190bf;
+  --grid: #d8c9ee;
+
+  --shadow-float: 0 18px 44px rgba(29, 22, 48, 0.18), 0 2px 6px rgba(29, 22, 48, 0.08);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
+  :root:where(:not([data-theme='light']):not([data-theme='lilac'])) {
     color-scheme: dark;
 
     --paper: #100f0d;
@@ -307,7 +347,7 @@ time {
 }
 
 .rail__actions {
-  display: flex;
+  display: none;
   gap: 6px;
 }
 
@@ -1382,6 +1422,10 @@ time {
     padding: 0;
     border-top: 0;
     flex-direction: row;
+  }
+
+  .rail__actions {
+    display: flex;
   }
 
   .topbar {

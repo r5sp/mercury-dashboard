@@ -29,7 +29,8 @@ These are the tells of a generated interface. None of them appear here.
 | A row of identical stat cards | One divided summary band |
 | Emoji as icons | A hand-drawn 16px stroke icon set |
 | All-caps everywhere | Mono micro-labels, sentence case elsewhere |
-| Dark mode as the only mode | Light is the default; dark is fully specified |
+| Dark mode as the only mode | Three themes, each separately specified |
+| Indigo `#6366f1` on white | Aubergine ink on lilac paper |
 
 ## Typography
 
@@ -52,8 +53,12 @@ is the single fastest way to look unconsidered.
 
 ## Colour
 
-Light is the default mode. The palette is warm-neutral with one accent; nothing
-here is a framework default.
+Three themes ship: **Lilac** (the default), **Paper**, and **Dark**. Each is
+specified in full rather than derived from the others, and every token in each
+clears WCAG AA against its own surfaces.
+
+Paper and Dark are warm-neutral with a claret accent; nothing there is a
+framework default.
 
 | Role | Light | Dark |
 |---|---|---|
@@ -67,6 +72,34 @@ here is a framework default.
 | Positive | `#1c6b45` | `#3f9e70` |
 | Negative | `#a32b2b` | `#dd7070` |
 | Caution | `#8a5a08` | `#c9932f` |
+
+### Lilac
+
+The light purple theme was asked for by name. Purple is the single loudest tell
+of a generated interface, so the answer is not to refuse it and not to reach for
+`#6366f1` either - it is to treat the hue with the same discipline as the rest of
+the system. Lilac is **aubergine ink on lilac paper**: the ground carries real
+tint, the data is a deep violet-black rather than a saturated brand purple, and
+the accent stays one held-back colour. Reds shift to a plum-crimson so they sit
+in the hue family instead of fighting the ground.
+
+| Role | Lilac |
+|---|---|
+| Paper (page) | `#e4daf4` |
+| Surface | `#f1eafb` |
+| Ink | `#1d1630` |
+| Ink secondary | `#4b4066` |
+| Muted | `#635a7d` |
+| Rule | `#cdbde8` |
+| Accent | `#6d3f9e` |
+| Data ink | `#2a1f45` |
+| Positive | `#146b4c` |
+| Negative | `#a32b4a` |
+| Caution | `#7c5510` |
+
+Worst contrast in the set is 4.75:1 for muted text against paper, which clears AA
+at the 10px label size it is used for. The muted token is a darker step here than
+in the other two themes precisely because the lilac ground is deeper than theirs.
 
 **Charts are ink, not colour.** The plotted series is the ink token; the
 comparison series is a muted hairline. Claret is reserved for the brand mark,
@@ -95,7 +128,7 @@ page:
 | `Cmd/Ctrl K` | Command palette - jump to any rep, switch period, toggle theme |
 | `/` | Focus the roster search |
 | `1` `2` `3` | 7 / 30 / 90 day reporting period |
-| `t` | Toggle theme |
+| `t` | Step through Lilac, Paper, Dark |
 | `Esc` | Close the palette or the detail panel |
 
 Rows are focusable and open on Enter. Focus is always visible: a 2px claret ring.

@@ -7,6 +7,7 @@ import { RepRoster, type RosterControls } from './components/RepRoster'
 import { RevenueChart, type Measure } from './components/RevenueChart'
 import { SummaryBand } from './components/SummaryBand'
 import { dataset } from './data'
+import { nextTheme, readStoredTheme, storeTheme, type Theme } from './lib/theme'
 import type { RangeKey } from './data/types'
 import {
   activityForRep,
@@ -23,21 +24,9 @@ import {
   type SortKey,
 } from './lib/metrics'
 
-type Theme = 'light' | 'dark'
-
-const STORAGE_KEY = 'mercury.theme'
-
-function readStoredTheme(): Theme | null {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY)
-    return value === 'light' || value === 'dark' ? value : null
-  } catch {
-    return null
-  }
-}
-
 export default function App() {
-  const [theme, setTheme] = useState<Theme>(() => readStoredTheme() ?? 'light')
+  // Lilac is the default the client asked for; a stored choice still wins.
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme() ?? 'lilac')
   const [range, setRange] = useState<RangeKey>(30)
   const [measure, setMeasure] = useState<Measure>('revenue')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -54,15 +43,11 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem(STORAGE_KEY, theme)
-    } catch {
-      /* private browsing - the choice just does not persist */
-    }
+    storeTheme(theme)
   }, [theme])
 
-  const toggleTheme = useCallback(() => {
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+  const cycleTheme = useCallback(() => {
+    setTheme((current) => nextTheme(current))
   }, [])
 
   const asOf = dataset.meta.generatedAt
@@ -155,12 +140,12 @@ export default function App() {
       } else if (event.key === '3') {
         setRange(90)
       } else if (event.key.toLowerCase() === 't') {
-        toggleTheme()
+        cycleTheme()
       }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [toggleTheme])
+  }, [cycleTheme])
 
   return (
     <div className="shell">
@@ -168,7 +153,7 @@ export default function App() {
         range={range}
         onRangeChange={setRange}
         theme={theme}
-        onThemeToggle={toggleTheme}
+        onThemeChange={setTheme}
         asOf={asOf}
         quarterLabel={dataset.meta.quarter.label}
       />
@@ -241,7 +226,8 @@ export default function App() {
           rows={allMetrics}
           onSelectRep={setSelectedId}
           onRangeChange={setRange}
-          onThemeToggle={toggleTheme}
+          onThemeChange={setTheme}
+          theme={theme}
           onClose={() => setPaletteOpen(false)}
         />
       ) : null}
